@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnapPDF | Image to PDF Converter</title>
+    <meta
+        name="description"
+        content="SnapPDF is a privacy-first image-to-PDF converter with temporary processing, drag-and-drop uploads, and instant downloads."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="page-shell">
+        <header class="hero-panel">
+            <div>
+                <p class="eyebrow">SnapPDF</p>
+                <h1>Convert your images into a polished PDF instantly.</h1>
+                <p class="hero-copy">
+                    Upload JPG, PNG, or WEBP images, reorder them before export, choose compression, and download a
+                    privacy-safe PDF.
+                </p>
+            </div>
+            <div class="hero-badge">
+                <span>Privacy-first</span>
+                <span>Instant download</span>
+                <span>Temporary processing</span>
+            </div>
+        </header>
+
+        <main class="app-grid">
+            <section class="panel upload-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="panel-label">Upload</p>
+                        <h2>Drag & drop images</h2>
+                    </div>
+                    <span class="badge">Unlimited uploads</span>
+                </div>
+
+                <div class="drop-zone" id="dropArea">
+                    <div class="drop-icon">🖼️</div>
+                    <div>
+                        <p class="drop-title">Drop images here or click browse</p>
+                        <p class="drop-subtitle">Only JPG, PNG, and WEBP files are accepted.</p>
+                    </div>
+                    <button class="button secondary" id="browseBtn" type="button">Choose Images</button>
+                    <input
+                        type="file"
+                        id="fileInput"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        hidden
+                    />
+                </div>
+
+                <div class="settings-grid">
+                    <label class="field-card">
+                        <span>Compression</span>
+                        <select id="compression" aria-label="Compression quality">
+                            <option value="high">High Quality</option>
+                            <option value="medium" selected>Medium Quality</option>
+                            <option value="low">Small Size</option>
+                        </select>
+                    </label>
+
+                    <div class="field-card">
+                        <span>Files ready</span>
+                        <strong id="fileCount">0 images</strong>
+                    </div>
+                </div>
+
+                <div class="status-bar">
+                    <span id="loadingIndicator" class="loader hidden"></span>
+                    <span id="statusText">Add images to start building your PDF.</span>
+                </div>
+            </section>
+
+            <section class="panel preview-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="panel-label">Preview</p>
+                        <h2>Arrange and review pages</h2>
+                    </div>
+                    <button class="button primary" id="convertBtn" type="button">Convert to PDF</button>
+                </div>
+
+                <div id="downloadPanel" class="download-panel hidden"></div>
+                <div id="previewContainer" class="preview-grid"></div>
+            </section>
+        </main>
+
+        <div class="footer-note">
+            <p>SnapPDF uses temporary backend processing only. Uploaded images and generated PDFs are removed after download.</p>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
