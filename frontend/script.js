@@ -173,6 +173,12 @@ function hideDownloadPanel() {
     downloadPanel.innerHTML = "";
 }
 
+function resetAppState() {
+    imageList = [];
+    fileInput.value = "";
+    renderPreview();
+}
+
 async function handleConversion() {
     if (!imageList.length) {
         showToast("Please add at least one image before converting.");
@@ -210,6 +216,7 @@ async function handleConversion() {
 
         link.click();
         link.remove();
+        resetAppState();
         showDownloadPanel(downloadUrl);
 
         window.setTimeout(() => {

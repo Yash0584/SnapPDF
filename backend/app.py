@@ -5,14 +5,26 @@ from pathlib import Path
 
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
+from werkzeug.exceptions import RequestEntityTooLarge
 
 from utils.pdf_generator import create_pdf
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB upload limit
+app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB upload limit
 CORS(app, resources={r"/convert": {"origins": "*"}})
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_large_file(error):
+    return (
+        jsonify(
+            {
+                "error": "Uploaded files are too large. Maximum upload size is 500 MB."
+            }
+        ),
+        413,
+    )
 
 
 def allowed_file(filename: str) -> bool:
