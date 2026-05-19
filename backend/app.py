@@ -14,17 +14,7 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB upload limit
 
-CORS(
-    app,
-    supports_credentials=True,
-    resources={
-        r"/*": {
-            "origins": [
-                "https://snap-pdf-two.vercel.app"
-            ]
-        }
-    }
-)
+CORS(app)
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(error):
     return (
