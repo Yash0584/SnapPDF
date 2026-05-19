@@ -6,6 +6,8 @@ QUALITY_MAP = {
     "low": 45,
 }
 
+MAX_WIDTH = 1600
+
 
 def create_pdf(image_paths, output_file, compression="medium"):
     """Create a multi-page PDF from temporary image files and write the result into a file-like object."""
@@ -14,11 +16,11 @@ def create_pdf(image_paths, output_file, compression="medium"):
 
     for image_path in image_paths:
         with Image.open(image_path) as source_image:
-            if source_image.mode != "RGB":
-                image = source_image.convert("RGB")
-            else:
-                image = source_image.copy()
-            images.append(image)
+            image = source_image.convert("RGB")
+            if image.width > MAX_WIDTH:
+                image.thumbnail((MAX_WIDTH, MAX_WIDTH * 10), Image.LANCZOS)
+            images.append(image.copy())
+            image.close()
 
     if not images:
         raise ValueError("No valid images were provided for PDF generation.")
