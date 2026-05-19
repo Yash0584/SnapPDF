@@ -32,3 +32,8 @@ def create_pdf(image_paths, output_file, compression="medium"):
         quality=quality,
         optimize=True,
     )
+
+    try:
+        output_file.seek(0)
+    except Exception:
+        pass
