@@ -1,4 +1,4 @@
-const API_URL = "https://snappdf-backend.onrender.com/";
+const API_URL = "https://snappdf-backend.onrender.com/convert";
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const dropArea = document.getElementById("dropArea");
 const fileInput = document.getElementById("fileInput");
