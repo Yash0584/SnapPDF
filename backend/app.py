@@ -13,8 +13,10 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB upload limit
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 CORS(app)
+
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(error):
     return (
