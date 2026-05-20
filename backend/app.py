@@ -29,6 +29,14 @@ def handle_large_file(error):
     )
 
 
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
+
 def allowed_file(filename: str) -> bool:
     return "." in filename and Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
 
@@ -43,8 +51,11 @@ def home():
     )
 
 
-@app.route("/convert", methods=["POST"])
+@app.route("/convert", methods=["OPTIONS", "POST"])
 def convert_images():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     uploaded_files = request.files.getlist("images")
     compression = request.form.get("compression", "medium").lower().strip()
 
