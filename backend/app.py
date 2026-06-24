@@ -1,28 +1,33 @@
 import io
+import os
 import tempfile
 import uuid
 from pathlib import Path
 
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from werkzeug.exceptions import RequestEntityTooLarge
 
-from utils.pdf_generator import create_pdf
+from utils.pdf_generator import MAX_IMAGES_PER_CONVERSION, create_pdf
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+MAX_TOTAL_UPLOAD_SIZE_BYTES = 150 * 1024 * 1024
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB upload limit
-app.config['CORS_HEADERS'] = 'Content-Type'
+app.config["MAX_CONTENT_LENGTH"] = MAX_TOTAL_UPLOAD_SIZE_BYTES
+app.config["CORS_HEADERS"] = "Content-Type"
 
 CORS(app)
+
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(error):
     return (
         jsonify(
             {
-                "error": "Uploaded files are too large. Maximum upload size is 500 MB."
+                "error": (
+                    f"Uploaded files are too large. Maximum upload size is {MAX_TOTAL_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB."
+                )
             }
         ),
         413,
@@ -41,6 +46,20 @@ def allowed_file(filename: str) -> bool:
     return "." in filename and Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
 
 
+def get_upload_size(uploaded_file) -> int:
+    content_length = getattr(uploaded_file, "content_length", None)
+    if content_length is not None:
+        return int(content_length)
+
+    try:
+        uploaded_file.stream.seek(0, os.SEEK_END)
+        size = uploaded_file.stream.tell()
+        uploaded_file.stream.seek(0)
+        return int(size)
+    except (AttributeError, OSError, ValueError):
+        return 0
+
+
 @app.route("/")
 def home():
     return jsonify(
@@ -57,9 +76,10 @@ def convert_images():
         return jsonify({"status": "ok"}), 200
 
     uploaded_files = request.files.getlist("images")
+    actual_files = [file for file in uploaded_files if file and getattr(file, "filename", None)]
     compression = request.form.get("compression", "medium").lower().strip()
 
-    if not uploaded_files:
+    if not actual_files:
         return (
             jsonify(
                 {
@@ -69,25 +89,41 @@ def convert_images():
             400,
         )
 
+    if len(actual_files) > MAX_IMAGES_PER_CONVERSION:
+        return jsonify({"error": "Maximum 50 images allowed per conversion."}), 400
+
+    total_upload_size = 0
+    for uploaded_file in actual_files:
+        if not allowed_file(uploaded_file.filename):
+            return (
+                jsonify(
+                    {
+                        "error": "Unsupported format. Please upload JPG, PNG, or WEBP images only."
+                    }
+                ),
+                400,
+            )
+
+        total_upload_size += get_upload_size(uploaded_file)
+        if total_upload_size > MAX_TOTAL_UPLOAD_SIZE_BYTES:
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            f"Total upload size exceeds {MAX_TOTAL_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB. "
+                            "Please upload fewer or smaller images."
+                        )
+                    }
+                ),
+                400,
+            )
+
     with tempfile.TemporaryDirectory(prefix="snappdf_") as temp_dir:
         temp_path = Path(temp_dir)
         image_paths = []
 
         try:
-            for uploaded_file in uploaded_files:
-                if not uploaded_file or not uploaded_file.filename:
-                    continue
-
-                if not allowed_file(uploaded_file.filename):
-                    return (
-                        jsonify(
-                            {
-                                "error": "Unsupported format. Please upload JPG, PNG, or WEBP images only."
-                            }
-                        ),
-                        400,
-                    )
-
+            for uploaded_file in actual_files:
                 extension = Path(uploaded_file.filename).suffix.lower()
                 temporary_name = f"{uuid.uuid4().hex}{extension}"
                 saved_path = temp_path / temporary_name
@@ -103,7 +139,12 @@ def convert_images():
                 )
 
             pdf_buffer = io.BytesIO()
-            create_pdf(image_paths=image_paths, output_file=pdf_buffer, compression=compression)
+            create_pdf(
+                image_paths=image_paths,
+                output_file=pdf_buffer,
+                compression=compression,
+                temp_dir=temp_path,
+            )
             pdf_buffer.seek(0)
 
             return send_file(
@@ -114,6 +155,9 @@ def convert_images():
                 max_age=0,
             )
 
+        except ValueError as exc:
+            app.logger.warning("SnapPDF validation failed: %s", exc)
+            return jsonify({"error": str(exc)}), 400
         except Exception:
             app.logger.exception("SnapPDF conversion failed")
             return (
