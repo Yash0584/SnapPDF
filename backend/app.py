@@ -8,10 +8,10 @@ from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from werkzeug.exceptions import RequestEntityTooLarge
 
-from utils.pdf_generator import MAX_IMAGES_PER_CONVERSION, create_pdf
+from utils.pdf_generator import create_pdf
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
-MAX_TOTAL_UPLOAD_SIZE_BYTES = 150 * 1024 * 1024
+MAX_TOTAL_UPLOAD_SIZE_BYTES = 500 * 1024 * 1024
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_TOTAL_UPLOAD_SIZE_BYTES
@@ -88,9 +88,6 @@ def convert_images():
             ),
             400,
         )
-
-    if len(actual_files) > MAX_IMAGES_PER_CONVERSION:
-        return jsonify({"error": "Maximum 50 images allowed per conversion."}), 400
 
     total_upload_size = 0
     for uploaded_file in actual_files:
